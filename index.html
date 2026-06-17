@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#667eea">
+    <title>VeriChat - Next Generation Face-Verified Messenger</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        /* Critical CSS for initial render */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Loading Animation */
+        .loader-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1%, transparent 1%);
+            background-size: 50px 50px;
+            animation: moveDots 20s linear infinite;
+        }
+
+        @keyframes moveDots {
+            from { transform: translate(0, 0); }
+            to { transform: translate(50px, 50px); }
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            transition: all 0.3s;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .hero-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            color: white;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: fadeInUp 1s;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            animation: fadeInUp 1s 0.2s backwards;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            animation: fadeInUp 1s 0.4s backwards;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Features Grid */
+        .features-section {
+            padding: 80px 20px;
+            background: #f8f9fa;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+            color: #333;
+        }
+
+        .features-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 30px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .feature-desc {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .stats-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a1a2e;
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+            .navbar {
+                padding: 15px 20px;
+            }
+            .nav-links {
+                display: none;
+            }
+            .cta-buttons {
+                flex-direction: column;
+                width: 100%;
+                max-width: 250px;
+            }
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            font-size: 1.5rem;
+            transition: transform 0.3s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="loader-wrapper" id="loader">
+        <div class="loader"></div>
+    </div>
+
+    <div class="hero">
+        <nav class="navbar">
+            <div class="logo">
+                <span class="logo-icon">👁️</span>
+                <span>VeriChat</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#security" class="nav-link">Security</a>
+                <a href="#pricing" class="nav-link">Pricing</a>
+                <a href="login.html" class="nav-link">Login</a>
+            </div>
+        </nav>
+
+        <div class="hero-content">
+            <h1 class="hero-title">Chat With Real People,<br>Not Bots</h1>
+            <p class="hero-subtitle">The world's first messenger with mandatory live face verification.<br>No fake profiles. No anonymity abuse. Just real connections.</p>
+            <div class="cta-buttons">
+                <a href="register.html" class="btn btn-primary">🚀 Get Started Free</a>
+                <a href="#demo" class="btn btn-secondary">🎥 Watch Demo</a>
+            </div>
+        </div>
+    </div>
+
+    <section id="features" class="features-section">
+        <h2 class="section-title">Why VeriChat is Different</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3 class="feature-title">Live Face Registration</h3>
+                <p class="feature-desc">Real-time face detection during signup. No photos, no uploads - your live face is your identity.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👁️</div>
+                <h3 class="feature-title">Face-to-First Message</h3>
+                <p class="feature-desc">When messaging new users, they see your registration live face until they save you as a contact.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎙️</div>
+                <h3 class="feature-title">Bilingual Voice Typing</h3>
+                <p class="feature-desc">Type with your voice in Sinhala or English - perfect for Sri Lankan users.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📍</div>
+                <h3 class="feature-title">Live Location Sharing</h3>
+                <p class="feature-desc">Share your real-time location with friends and family, just like WhatsApp.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">Polls & Surveys</h3>
+                <p class="feature-desc">Create polls in groups, see results in real-time.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎤</div>
+                <h3 class="feature-title">Voice Messages</h3>
+                <p class="feature-desc">Record and send voice messages with one tap.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="security" class="stats-section">
+        <h2 class="section-title" style="color: white;">Trusted by Early Users</h2>
+        <div class="stats-grid">
+            <div>
+                <div class="stat-number" id="userCount">0</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+            <div>
+                <div class="stat-number" id="msgCount">0</div>
+                <div class="stat-label">Messages Sent</div>
+            </div>
+            <div>
+                <div class="stat-number">99.9%</div>
+                <div class="stat-label">Bot Prevention</div>
+            </div>
+            <div>
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Moderation</div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2024 VeriChat - Secure Face-Verified Messenger</p>
+        <p style="margin-top: 10px; opacity: 0.7;">Making the internet a safer place, one face at a time.</p>
+    </footer>
+
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+
+    <script>
+        // Remove loader
+        window.addEventListener('load', () => {
+            document.getElementById('loader').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loader').style.display = 'none';
+            }, 500);
+        });
+
+        // Animated counter for stats
+        function animateCounter(element, target) {
+            let current = 0;
+            const increment = target / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target.toLocaleString();
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current).toLocaleString();
+                }
+            }, 40);
+        }
+
+        // Simulate stats (will be replaced with real data from Firebase)
+        setTimeout(() => {
+            animateCounter(document.getElementById('userCount'), 15234);
+            animateCounter(document.getElementById('msgCount'), 892341);
+        }, 1000);
+
+        // Theme management
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.style.background = '#1a1a2e';
+                document.body.style.color = '#fff';
+                document.querySelector('.features-section').style.background = '#16213e';
+                document.querySelectorAll('.feature-card').forEach(card => {
+                    card.style.background = '#1f2937';
+                    card.style.color = '#fff';
+                });
+                document.getElementById('themeToggle').innerHTML = '☀️';
+            } else {
+                document.body.style.background = '#fff';
+                document.body.style.color = '#333';
+                document.querySelector('.features-section').style.background = '#f8f9fa';
+                document.querySelectorAll('.feature-card').forEach(card => {
+                    card.style.background = '#fff';
+                    card.style.color = '#333';
+                });
+                document.getElementById('themeToggle').innerHTML = '🌙';
+            }
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', currentTheme);
+            applyTheme(currentTheme);
+        }
+
+        applyTheme(currentTheme);
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
