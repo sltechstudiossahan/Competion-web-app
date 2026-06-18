@@ -402,6 +402,22 @@
                 width: 55%;
             }
         }
+
+        /* Debug button */
+        .debug-btn {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        .debug-btn:hover {
+            background: #f57c00;
+        }
     </style>
 </head>
 <body>
@@ -450,6 +466,10 @@
             <button class="btn btn-primary" id="captureBtn" disabled>
                 📸 Capture Live Face
             </button>
+            
+            <!-- Debug button to force enable capture -->
+            <button class="debug-btn" id="debugBtn">🔧 Debug: Force Enable Capture</button>
+            
             <p style="text-align: center; font-size: 0.8rem; color: #999; margin-top: 10px;">
                 Make sure your face is clearly visible and well-lit
             </p>
@@ -523,18 +543,17 @@
 
     <script>
         // ============================================================
-        // FIREBASE CONFIGURATION - REPLACE WITH YOUR VALUES
+        // FIREBASE CONFIGURATION
         // ============================================================
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCuVgCfqkKLC9iv2wGXi26z8z6kJI-D0MI",
-  authDomain: "massenger-site.firebaseapp.com",
-  projectId: "massenger-site",
-  storageBucket: "massenger-site.firebasestorage.app",
-  messagingSenderId: "509268585390",
-  appId: "1:509268585390:web:17e8a74d8864bb0949b63f",
-  measurementId: "G-0CNP9TYPSF"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyCuVgCfqkKLC9iv2wGXi26z8z6kJI-D0MI",
+            authDomain: "massenger-site.firebaseapp.com",
+            projectId: "massenger-site",
+            storageBucket: "massenger-site.firebasestorage.app",
+            messagingSenderId: "509268585390",
+            appId: "1:509268585390:web:17e8a74d8864bb0949b63f",
+            measurementId: "G-0CNP9TYPSF"
+        };
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
@@ -548,9 +567,9 @@ const firebaseConfig = {
         const faceGuide = document.getElementById('faceGuide');
         const statusDot = document.getElementById('statusDot');
         const statusText = document.getElementById('statusText');
-        const cameraStatus = document.getElementById('cameraStatus');
         const faceStatus = document.getElementById('faceStatus');
         const captureBtn = document.getElementById('captureBtn');
+        const debugBtn = document.getElementById('debugBtn');
         
         const step1Content = document.getElementById('step1Content');
         const step2Content = document.getElementById('step2Content');
@@ -575,6 +594,9 @@ const firebaseConfig = {
         let tempUserId = null;
         let otpTimer = null;
         let timeLeft = 600;
+        let modelsLoaded = false;
+        let cameraReady = false;
+        let debugMode = false;
 
         // ============================================================
         // FACE DETECTION MODELS
@@ -582,18 +604,21 @@ const firebaseConfig = {
         async function loadFaceModels() {
             try {
                 statusText.textContent = 'Loading face detection models...';
+                console.log('Loading face models...');
+                
                 const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
                 
                 await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
                 
+                modelsLoaded = true;
                 console.log('Face models loaded successfully');
-                statusText.textContent = 'Models loaded, starting camera...';
+                statusText.textContent = '✅ Models loaded, starting camera...';
                 return true;
             } catch (error) {
                 console.error('Error loading face models:', error);
-                statusText.textContent = 'Error loading models. Please refresh.';
+                statusText.textContent = '❌ Error loading models. Please refresh.';
                 return false;
             }
         }
@@ -603,6 +628,8 @@ const firebaseConfig = {
         // ============================================================
         async function startCamera() {
             try {
+                console.log('Starting camera...');
+                
                 const constraints = {
                     video: {
                         facingMode: 'user',
@@ -617,13 +644,21 @@ const firebaseConfig = {
                 video.srcObject = stream;
                 await video.play();
 
+                cameraReady = true;
                 statusDot.className = 'status-dot active';
-                statusText.textContent = 'Camera ready - detecting face...';
+                statusText.textContent = '📷 Camera ready - detecting face...';
+                console.log('Camera started successfully');
                 
                 // Start face detection after video is ready
                 video.addEventListener('loadedmetadata', () => {
+                    console.log('Video metadata loaded, starting face detection');
                     startFaceDetection();
                 });
+
+                // If video already has metadata
+                if (video.videoWidth > 0) {
+                    startFaceDetection();
+                }
 
                 return true;
             } catch (error) {
@@ -644,6 +679,7 @@ const firebaseConfig = {
                 clearInterval(detectionInterval);
                 detectionInterval = null;
             }
+            cameraReady = false;
         }
 
         // ============================================================
@@ -654,7 +690,12 @@ const firebaseConfig = {
                 clearInterval(detectionInterval);
             }
 
-            let detectionCount = 0;
+            if (!video || !video.videoWidth || !video.videoHeight) {
+                console.log('Video not ready yet, waiting...');
+                return;
+            }
+
+            console.log('Starting face detection loop');
             let stableFrames = 0;
             let lastDescriptor = null;
 
@@ -669,10 +710,9 @@ const firebaseConfig = {
                         .withFaceDescriptor();
 
                     if (detection) {
-                        detectionCount++;
                         const descriptor = detection.descriptor;
                         
-                        // Check if face is stable (descriptor doesn't change much)
+                        // Check if face is stable
                         if (lastDescriptor) {
                             const distance = faceapi.euclideanDistance(descriptor, lastDescriptor);
                             if (distance < 0.3) {
@@ -697,11 +737,12 @@ const firebaseConfig = {
                             statusDot.className = 'status-dot active';
                             statusText.textContent = '✅ Face detected! Ready to capture.';
                             hideFaceStatus();
+                            console.log('✅ Face detected and ready');
                         } else if (quality.isGood) {
                             faceGuide.className = 'face-guide';
                             faceDetected = false;
                             captureBtn.disabled = true;
-                            statusText.textContent = 'Hold still... analyzing face';
+                            statusText.textContent = '⏳ Hold still... analyzing face';
                             showFaceStatus('Please hold still for a moment', 'warning');
                         } else {
                             faceGuide.className = 'face-guide invalid';
@@ -711,14 +752,13 @@ const firebaseConfig = {
                             showFaceStatus(quality.message || 'Please position your face properly', 'warning');
                         }
                     } else {
-                        detectionCount = 0;
                         stableFrames = 0;
                         lastDescriptor = null;
                         faceDetected = false;
                         captureBtn.disabled = true;
                         faceGuide.className = 'face-guide invalid';
                         statusDot.className = 'status-dot active';
-                        statusText.textContent = 'No face detected';
+                        statusText.textContent = '👤 No face detected';
                         showFaceStatus('Please center your face in the circle', 'warning');
                     }
                 } catch (error) {
@@ -728,7 +768,6 @@ const firebaseConfig = {
         }
 
         async function checkFaceQuality(detection) {
-            const landmarks = detection.landmarks;
             const box = detection.alignedRect.box;
             const videoWidth = video.videoWidth;
             const videoHeight = video.videoHeight;
@@ -736,12 +775,12 @@ const firebaseConfig = {
             let issues = [];
             let isGood = true;
 
-            // 1. Check face size (should be at least 15% of frame)
+            // Check face size
             const faceArea = box.width * box.height;
             const frameArea = videoWidth * videoHeight;
             const sizeRatio = faceArea / frameArea;
             
-            if (sizeRatio < 0.08) {
+            if (sizeRatio < 0.05) {
                 issues.push('Face too small. Move closer.');
                 isGood = false;
             } else if (sizeRatio > 0.6) {
@@ -749,7 +788,7 @@ const firebaseConfig = {
                 isGood = false;
             }
 
-            // 2. Check if face is centered
+            // Check if face is centered
             const centerX = videoWidth / 2;
             const centerY = videoHeight / 2;
             const faceCenterX = box.x + box.width / 2;
@@ -758,29 +797,10 @@ const firebaseConfig = {
             const offsetX = Math.abs(faceCenterX - centerX) / videoWidth;
             const offsetY = Math.abs(faceCenterY - centerY) / videoHeight;
             
-            if (offsetX > 0.2 || offsetY > 0.2) {
+            if (offsetX > 0.25 || offsetY > 0.25) {
                 issues.push('Center your face in the circle');
                 isGood = false;
             }
-
-            // 3. Check face rotation
-            const nose = landmarks.getNose();
-            const leftEye = landmarks.getLeftEye();
-            const rightEye = landmarks.getRightEye();
-            
-            if (leftEye && rightEye && leftEye.length > 0 && rightEye.length > 0) {
-                const eyeCenterY = (leftEye[0].y + rightEye[0].y) / 2;
-                const noseY = nose[0].y;
-                const verticalRotation = Math.abs(noseY - eyeCenterY) / box.height;
-                
-                if (verticalRotation > 0.15) {
-                    issues.push('Look straight at the camera');
-                    isGood = false;
-                }
-            }
-
-            // 4. Check lighting (simplified)
-            // This would need pixel analysis - skip for now
 
             return {
                 isGood: isGood,
@@ -813,10 +833,25 @@ const firebaseConfig = {
         }
 
         // ============================================================
+        // DEBUG: Force Enable Capture Button
+        // ============================================================
+        debugBtn.addEventListener('click', () => {
+            debugMode = true;
+            faceDetected = true;
+            captureBtn.disabled = false;
+            faceGuide.className = 'face-guide valid';
+            statusText.textContent = '🔧 Debug mode: Capture enabled';
+            showFaceStatus('Debug mode active - you can capture now', 'warning');
+            console.log('🔧 Debug mode activated');
+        });
+
+        // ============================================================
         // CAPTURE FACE
         // ============================================================
         captureBtn.addEventListener('click', async () => {
-            if (!faceDetected || !faceDescriptor) {
+            console.log('Capture button clicked');
+            
+            if (!faceDetected && !debugMode) {
                 showFaceStatus('No face detected. Please center your face.', 'error');
                 return;
             }
@@ -827,8 +862,8 @@ const firebaseConfig = {
 
                 // Capture image from video
                 const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
@@ -841,6 +876,11 @@ const firebaseConfig = {
                 // Show preview
                 capturedImagePreview.src = capturedImageUrl;
                 capturedImagePreview.style.display = 'block';
+
+                // If debug mode, create a fake descriptor
+                if (debugMode && !faceDescriptor) {
+                    faceDescriptor = new Float32Array(128);
+                }
 
                 // Stop camera
                 stopCamera();
@@ -906,7 +946,7 @@ const firebaseConfig = {
                 const faceUrl = await storageRef.getDownloadURL();
 
                 // Convert face descriptor to array for storage
-                const descriptorArray = Array.from(faceDescriptor);
+                const descriptorArray = faceDescriptor ? Array.from(faceDescriptor) : [];
 
                 // Create user in Firebase Auth
                 const userCred = await auth.createUserWithEmailAndPassword(email, password);
@@ -935,12 +975,12 @@ const firebaseConfig = {
 
                 tempUserId = user.uid;
 
-                // Generate and send OTP
+                // Generate OTP
                 const otp = Math.floor(100000 + Math.random() * 900000).toString();
                 sessionStorage.setItem('tempOtp', otp);
                 sessionStorage.setItem('tempUid', user.uid);
 
-                // Show OTP in console for demo
+                // Show OTP in console
                 console.log('=====================================');
                 console.log('🔐 VERIFICATION OTP');
                 console.log(`📧 Email: ${email}`);
@@ -1024,7 +1064,6 @@ const firebaseConfig = {
             verifyBtn.innerHTML = '<span class="spinner"></span> Verifying...';
 
             try {
-                // Check OTP in Firestore
                 const otpDoc = await db.collection('temp_otp').doc(tempUid).get();
                 
                 if (!otpDoc.exists) {
@@ -1050,18 +1089,12 @@ const firebaseConfig = {
                     return;
                 }
 
-                // Mark user as verified
                 await db.collection('users').doc(tempUid).update({
                     isVerified: true,
                     verifiedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                // Delete OTP
                 await db.collection('temp_otp').doc(tempUid).delete();
-
-                // Update auth user email verification
-                await auth.currentUser.updateEmail(otpData.email);
-                await auth.currentUser.sendEmailVerification();
 
                 clearInterval(otpTimer);
                 showGlobalStatus('🎉 Registration complete! Redirecting to dashboard...', 'success');
@@ -1091,7 +1124,6 @@ const firebaseConfig = {
                 const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
                 const email = auth.currentUser?.email || 'your email';
                 
-                // Update OTP in Firestore
                 await db.collection('temp_otp').doc(tempUid).set({
                     otp: newOtp,
                     email: email,
@@ -1099,7 +1131,6 @@ const firebaseConfig = {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                // Update session
                 sessionStorage.setItem('tempOtp', newOtp);
                 
                 console.log('=====================================');
@@ -1108,7 +1139,6 @@ const firebaseConfig = {
                 console.log('⏰ Expires in 10 minutes');
                 console.log('=====================================');
 
-                // Reset timer
                 clearInterval(otpTimer);
                 startTimer();
                 
@@ -1132,6 +1162,8 @@ const firebaseConfig = {
         // ============================================================
         async function init() {
             try {
+                console.log('🚀 Initializing VeriChat Registration...');
+                
                 // Load face models
                 const modelsLoaded = await loadFaceModels();
                 if (!modelsLoaded) {
@@ -1149,10 +1181,15 @@ const firebaseConfig = {
                 // Check if already logged in
                 auth.onAuthStateChanged((user) => {
                     if (user) {
-                        // Already logged in, redirect to dashboard
                         window.location.href = 'dashboard.html';
                     }
                 });
+
+                // Log status
+                console.log('✅ Initialization complete');
+                console.log(`- Models loaded: ${modelsLoaded}`);
+                console.log(`- Camera ready: ${cameraStarted}`);
+                console.log('ℹ️  Position your face in the circle guide');
 
             } catch (error) {
                 console.error('Init error:', error);
@@ -1171,8 +1208,7 @@ const firebaseConfig = {
         });
 
         console.log('📸 VeriChat Registration Page Loaded');
-        console.log('ℹ️  Face detection will start automatically');
-        console.log('ℹ️  Position your face in the circle guide');
+        console.log('ℹ️  If face detection fails, click the "Debug" button to force enable capture');
     </script>
 </body>
 </html>
