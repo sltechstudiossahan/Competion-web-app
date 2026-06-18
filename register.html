@@ -4,40 +4,140 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Register - Live Face Verification | VeriChat</title>
-    <link rel="stylesheet" href="css/main.css">
     <style>
-        .register-container {
-            min-height: 100vh;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
-        
-        .register-card {
+
+        .register-container {
             background: white;
             border-radius: 20px;
             max-width: 500px;
             width: 100%;
             padding: 30px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-height: 95vh;
+            overflow-y: auto;
         }
-        
+
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo-icon {
+            font-size: 2.5rem;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 1.5rem;
+            margin-top: 5px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 15%;
+            right: 15%;
+            height: 2px;
+            background: #e0e0e0;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .step.active .step-number {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.2);
+        }
+
+        .step.completed .step-number {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.7rem;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .step.active .step-label {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        /* Camera Section */
+        .camera-section {
+            margin-bottom: 20px;
+        }
+
         .camera-wrapper {
             position: relative;
-            margin-bottom: 20px;
             border-radius: 15px;
             overflow: hidden;
-            background: #000;
+            background: #1a1a2e;
+            aspect-ratio: 4/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
+
         #video {
             width: 100%;
-            height: auto;
+            height: 100%;
+            object-fit: cover;
             display: block;
         }
-        
+
         .face-overlay {
             position: absolute;
             top: 0;
@@ -45,267 +145,412 @@
             width: 100%;
             height: 100%;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             pointer-events: none;
         }
-        
+
         .face-guide {
-            width: 200px;
-            height: 200px;
-            border: 3px solid rgba(255,255,255,0.5);
+            width: 45%;
+            aspect-ratio: 1/1;
+            border: 3px solid rgba(255,255,255,0.4);
             border-radius: 50%;
-            box-shadow: 0 0 0 999px rgba(0,0,0,0.3);
-            transition: border-color 0.3s;
+            position: relative;
+            transition: all 0.3s;
         }
-        
+
         .face-guide.valid {
             border-color: #4CAF50;
-            box-shadow: 0 0 0 999px rgba(76,175,80,0.1);
+            box-shadow: 0 0 30px rgba(76, 175, 80, 0.3);
         }
-        
-        .instruction {
-            text-align: center;
-            margin: 15px 0;
-            color: #666;
-            font-size: 0.9rem;
+
+        .face-guide.invalid {
+            border-color: #f44336;
+            box-shadow: 0 0 30px rgba(244, 67, 54, 0.3);
         }
-        
-        .capture-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+        .face-guide .guide-text {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
             color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin: 10px 0;
-            transition: transform 0.2s;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.5);
+            padding: 4px 12px;
+            border-radius: 20px;
         }
-        
-        .capture-btn:hover {
-            transform: scale(1.02);
-        }
-        
-        .capture-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 500;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        
-        .progress-steps {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-        }
-        
-        .step {
-            flex: 1;
+
+        .camera-status {
             text-align: center;
-            position: relative;
-        }
-        
-        .step-number {
-            width: 30px;
-            height: 30px;
-            background: #ddd;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        
-        .step.active .step-number {
-            background: #667eea;
-            color: white;
-        }
-        
-        .step.completed .step-number {
-            background: #4CAF50;
-            color: white;
-        }
-        
-        .step-label {
-            font-size: 0.75rem;
-            color: #666;
-        }
-        
-        .step.active .step-label {
-            color: #667eea;
-            font-weight: bold;
-        }
-        
-        .otp-timer {
-            text-align: center;
-            margin-top: 10px;
+            padding: 10px;
             font-size: 0.85rem;
             color: #666;
         }
-        
+
+        .camera-status .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: blink 1s infinite;
+        }
+
+        .camera-status .status-dot.active {
+            background: #4CAF50;
+        }
+
+        .camera-status .status-dot.inactive {
+            background: #f44336;
+            animation: none;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .btn-success {
+            background: #4CAF50;
+            color: white;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        /* Hidden sections */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 12px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 0.9rem;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #48bb78;
+        }
+
+        .status-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #f56565;
+        }
+
+        .status-warning {
+            background: #feebc8;
+            color: #7b341e;
+            border-left: 4px solid #ed8936;
+        }
+
+        .status-info {
+            background: #bee3f8;
+            color: #2c5282;
+            border-left: 4px solid #4299e1;
+        }
+
+        .otp-timer {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .otp-timer span {
+            font-weight: bold;
+            color: #667eea;
+        }
+
         .resend-btn {
             background: none;
             border: none;
             color: #667eea;
             cursor: pointer;
             text-decoration: underline;
+            font-size: 0.85rem;
         }
-        
-        .status-message {
-            padding: 10px;
-            border-radius: 8px;
-            margin: 10px 0;
+
+        .resend-btn:hover {
+            color: #5a67d8;
+        }
+
+        .login-link {
             text-align: center;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #666;
         }
-        
-        .status-success {
-            background: #c6f6d5;
-            color: #22543d;
+
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
         }
-        
-        .status-error {
-            background: #fed7d7;
-            color: #742a2a;
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
-        
-        .status-warning {
-            background: #feebc8;
-            color: #7b341e;
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
-        
-        .hidden {
-            display: none;
-        }
-        
-        @media (max-width: 768px) {
-            .register-card {
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .register-container {
                 padding: 20px;
+                border-radius: 15px;
             }
-            
+
             .face-guide {
-                width: 150px;
-                height: 150px;
+                width: 55%;
             }
         }
     </style>
 </head>
 <body>
     <div class="register-container">
-        <div class="register-card">
-            <div class="progress-steps">
-                <div class="step active" id="step1">
-                    <div class="step-number">1</div>
-                    <div class="step-label">Live Face</div>
-                </div>
-                <div class="step" id="step2">
-                    <div class="step-number">2</div>
-                    <div class="step-label">Account</div>
-                </div>
-                <div class="step" id="step3">
-                    <div class="step-number">3</div>
-                    <div class="step-label">Verify</div>
-                </div>
+        <div class="logo">
+            <div class="logo-icon">👁️</div>
+            <h1>VeriChat</h1>
+            <p>Live Face Verification Required</p>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="progress-steps">
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <div class="step-label">Face Capture</div>
             </div>
-            
-            <!-- Step 1: Face Capture -->
-            <div id="step1Content">
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <div class="step-label">Account Details</div>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <div class="step-label">Verify OTP</div>
+            </div>
+        </div>
+
+        <!-- Step 1: Face Capture -->
+        <div id="step1Content">
+            <div class="camera-section">
                 <div class="camera-wrapper">
-                    <video id="video" autoplay playsinline></video>
+                    <video id="video" autoplay playsinline muted></video>
                     <div class="face-overlay">
-                        <div class="face-guide" id="faceGuide"></div>
+                        <div class="face-guide" id="faceGuide">
+                            <span class="guide-text">👤 Position face here</span>
+                        </div>
                     </div>
                 </div>
-                <p class="instruction">📸 Position your face in the circle<br>Look straight at the camera</p>
-                <button class="capture-btn" id="captureBtn" disabled>Capture Live Face</button>
-                <div id="faceStatus" class="status-message hidden"></div>
+                <div class="camera-status" id="cameraStatus">
+                    <span class="status-dot inactive" id="statusDot"></span>
+                    <span id="statusText">Initializing camera...</span>
+                </div>
             </div>
-            
-            <!-- Step 2: Account Details (Hidden initially) -->
-            <div id="step2Content" class="hidden">
-                <form id="registerForm">
-                    <div class="form-group">
-                        <label>📧 Gmail Address</label>
-                        <input type="email" id="email" required placeholder="yourname@gmail.com">
-                    </div>
-                    <div class="form-group">
-                        <label>🔐 Recovery Password</label>
-                        <input type="password" id="password" required placeholder="Min 6 characters">
-                        <small style="color: #666;">Used for account recovery</small>
-                    </div>
-                    <div class="form-group">
-                        <label>👤 Display Name</label>
-                        <input type="text" id="displayName" required placeholder="How others see you">
-                    </div>
-                    <div class="form-group">
-                        <label>📱 Phone (Optional)</label>
-                        <input type="tel" id="phone" placeholder="+94 XX XXX XXXX">
-                    </div>
-                    <button type="submit" class="capture-btn">Continue →</button>
-                </form>
-            </div>
-            
-            <!-- Step 3: OTP Verification (Hidden initially) -->
-            <div id="step3Content" class="hidden">
-                <div id="otpMessage" class="status-message status-success">
-                    ✓ Verification code sent to your email
-                </div>
-                <div class="form-group">
-                    <label>🔑 Enter OTP Code</label>
-                    <input type="text" id="otpCode" placeholder="6-digit code" maxlength="6">
-                </div>
-                <div class="otp-timer">
-                    Code expires in: <span id="timer">10:00</span>
-                </div>
-                <div class="otp-timer">
-                    <button class="resend-btn" id="resendBtn">Resend Code</button>
-                </div>
-                <button class="capture-btn" id="verifyBtn">Verify & Complete</button>
-            </div>
-            
-            <div id="globalStatus" class="status-message hidden"></div>
-            
-            <p style="text-align: center; margin-top: 20px; font-size: 0.85rem;">
-                Already have an account? <a href="login.html">Login here</a>
+
+            <div id="faceStatus" class="status-message hidden"></div>
+
+            <button class="btn btn-primary" id="captureBtn" disabled>
+                📸 Capture Live Face
+            </button>
+            <p style="text-align: center; font-size: 0.8rem; color: #999; margin-top: 10px;">
+                Make sure your face is clearly visible and well-lit
             </p>
         </div>
+
+        <!-- Step 2: Account Details -->
+        <div id="step2Content" class="hidden">
+            <div id="capturedFacePreview" style="text-align: center; margin-bottom: 20px;">
+                <img id="capturedImagePreview" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #4CAF50; display: none;">
+                <p style="color: #4CAF50; font-size: 0.9rem; margin-top: 5px;">✓ Face captured successfully!</p>
+            </div>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>📧 Gmail Address</label>
+                    <input type="email" id="email" required placeholder="yourname@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label>🔐 Recovery Password</label>
+                    <input type="password" id="password" required placeholder="Min 6 characters">
+                    <small style="color: #999; font-size: 0.8rem;">Used for account recovery and login</small>
+                </div>
+                <div class="form-group">
+                    <label>👤 Display Name</label>
+                    <input type="text" id="displayName" required placeholder="How others see you">
+                </div>
+                <div class="form-group">
+                    <label>📱 Phone (Optional)</label>
+                    <input type="tel" id="phone" placeholder="+94 XX XXX XXXX">
+                </div>
+                <button type="submit" class="btn btn-primary" id="registerBtn">
+                    Continue →
+                </button>
+            </form>
+        </div>
+
+        <!-- Step 3: OTP Verification -->
+        <div id="step3Content" class="hidden">
+            <div id="otpMessage" class="status-message status-success">
+                ✓ Verification code sent to your email
+            </div>
+            <div class="form-group">
+                <label>🔑 Enter 6-Digit Code</label>
+                <input type="text" id="otpCode" placeholder="e.g., 123456" maxlength="6" inputmode="numeric" pattern="[0-9]*">
+            </div>
+            <div class="otp-timer">
+                Code expires in: <span id="timer">10:00</span>
+            </div>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <button class="resend-btn" id="resendBtn">Resend Code</button>
+            </div>
+            <button class="btn btn-success" id="verifyBtn">
+                ✅ Verify & Complete
+            </button>
+        </div>
+
+        <div id="globalStatus" class="status-message hidden"></div>
+
+        <div class="login-link">
+            Already have an account? <a href="login.html">Login here</a>
+        </div>
     </div>
-    
+
+    <!-- Firebase & Face Detection Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/face-verification.js"></script>
+
     <script>
-        // Registration flow controller
-        let capturedFaceDescriptor = null;
-        let capturedFaceUrl = null;
-        let tempUserId = null;
-        let otpTimer = null;
-        let timeLeft = 600; // 10 minutes in seconds
+        // ============================================================
+        // FIREBASE CONFIGURATION - REPLACE WITH YOUR VALUES
+        // ============================================================
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCuVgCfqkKLC9iv2wGXi26z8z6kJI-D0MI",
+  authDomain: "massenger-site.firebaseapp.com",
+  projectId: "massenger-site",
+  storageBucket: "massenger-site.firebasestorage.app",
+  messagingSenderId: "509268585390",
+  appId: "1:509268585390:web:17e8a74d8864bb0949b63f",
+  measurementId: "G-0CNP9TYPSF"
+};
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // ============================================================
+        // DOM REFERENCES
+        // ============================================================
+        const video = document.getElementById('video');
+        const faceGuide = document.getElementById('faceGuide');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const cameraStatus = document.getElementById('cameraStatus');
+        const faceStatus = document.getElementById('faceStatus');
+        const captureBtn = document.getElementById('captureBtn');
         
         const step1Content = document.getElementById('step1Content');
         const step2Content = document.getElementById('step2Content');
@@ -313,203 +558,441 @@
         const step1 = document.getElementById('step1');
         const step2 = document.getElementById('step2');
         const step3 = document.getElementById('step3');
-        const captureBtn = document.getElementById('captureBtn');
-        const faceGuide = document.getElementById('faceGuide');
-        const faceStatus = document.getElementById('faceStatus');
-        
-        let video, stream;
-        let faceDetectionModel = null;
-        
-        // Load face detection models
+
+        const capturedImagePreview = document.getElementById('capturedImagePreview');
+        const registerForm = document.getElementById('registerForm');
+        const globalStatus = document.getElementById('globalStatus');
+
+        // ============================================================
+        // STATE
+        // ============================================================
+        let stream = null;
+        let detectionInterval = null;
+        let faceDetected = false;
+        let faceDescriptor = null;
+        let capturedImageBlob = null;
+        let capturedImageUrl = null;
+        let tempUserId = null;
+        let otpTimer = null;
+        let timeLeft = 600;
+
+        // ============================================================
+        // FACE DETECTION MODELS
+        // ============================================================
         async function loadFaceModels() {
-            const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-            await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-            await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-            console.log('Face models loaded');
-            startCamera();
-        }
-        
-        // Start camera
-        async function startCamera() {
-            video = document.getElementById('video');
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'user',
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    } 
-                });
-                video.srcObject = stream;
-                await video.play();
-                startFaceDetection();
-            } catch (err) {
-                showStatus('Camera access is required for registration', 'error');
-                console.error(err);
+                statusText.textContent = 'Loading face detection models...';
+                const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+                
+                await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                
+                console.log('Face models loaded successfully');
+                statusText.textContent = 'Models loaded, starting camera...';
+                return true;
+            } catch (error) {
+                console.error('Error loading face models:', error);
+                statusText.textContent = 'Error loading models. Please refresh.';
+                return false;
             }
         }
-        
-        let detectionInterval;
-        
-        function startFaceDetection() {
-            detectionInterval = setInterval(async () => {
-                if (!video.videoWidth) return;
+
+        // ============================================================
+        // CAMERA
+        // ============================================================
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        frameRate: { ideal: 30 }
+                    },
+                    audio: false
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                await video.play();
+
+                statusDot.className = 'status-dot active';
+                statusText.textContent = 'Camera ready - detecting face...';
                 
-                const detections = await faceapi.detectSingleFace(video)
-                    .withFaceLandmarks()
-                    .withFaceDescriptor();
-                
-                if (detections) {
-                    // Face detected
-                    faceGuide.classList.add('valid');
-                    captureBtn.disabled = false;
-                    
-                    // Check face quality
-                    const landmarks = detections.landmarks;
-                    const leftEye = landmarks.getLeftEye();
-                    const rightEye = landmarks.getRightEye();
-                    
-                    // Simple liveness check - eyes should be visible
-                    if (leftEye && rightEye && leftEye.length > 0 && rightEye.length > 0) {
-                        captureBtn.style.opacity = '1';
-                        hideStatus();
-                    }
-                    
-                    capturedFaceDescriptor = detections.descriptor;
-                } else {
-                    faceGuide.classList.remove('valid');
-                    captureBtn.disabled = true;
-                    showStatus('No face detected. Please center your face.', 'warning');
-                }
-            }, 500);
+                // Start face detection after video is ready
+                video.addEventListener('loadedmetadata', () => {
+                    startFaceDetection();
+                });
+
+                return true;
+            } catch (error) {
+                console.error('Camera error:', error);
+                statusDot.className = 'status-dot inactive';
+                statusText.textContent = '⚠️ Camera access denied. Please allow camera access.';
+                showFaceStatus('Camera access is required for registration. Please allow camera access and refresh.', 'error');
+                return false;
+            }
         }
-        
-        function showStatus(message, type) {
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+        }
+
+        // ============================================================
+        // FACE DETECTION
+        // ============================================================
+        function startFaceDetection() {
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+            }
+
+            let detectionCount = 0;
+            let stableFrames = 0;
+            let lastDescriptor = null;
+
+            detectionInterval = setInterval(async () => {
+                if (!video || !video.videoWidth || !video.videoHeight) {
+                    return;
+                }
+
+                try {
+                    const detection = await faceapi.detectSingleFace(video)
+                        .withFaceLandmarks()
+                        .withFaceDescriptor();
+
+                    if (detection) {
+                        detectionCount++;
+                        const descriptor = detection.descriptor;
+                        
+                        // Check if face is stable (descriptor doesn't change much)
+                        if (lastDescriptor) {
+                            const distance = faceapi.euclideanDistance(descriptor, lastDescriptor);
+                            if (distance < 0.3) {
+                                stableFrames++;
+                            } else {
+                                stableFrames = 0;
+                            }
+                        } else {
+                            stableFrames = 1;
+                        }
+                        lastDescriptor = descriptor;
+
+                        // Check face quality
+                        const quality = await checkFaceQuality(detection);
+                        
+                        if (quality.isGood && stableFrames > 3) {
+                            // Face is stable and good quality
+                            faceGuide.className = 'face-guide valid';
+                            faceDetected = true;
+                            faceDescriptor = descriptor;
+                            captureBtn.disabled = false;
+                            statusDot.className = 'status-dot active';
+                            statusText.textContent = '✅ Face detected! Ready to capture.';
+                            hideFaceStatus();
+                        } else if (quality.isGood) {
+                            faceGuide.className = 'face-guide';
+                            faceDetected = false;
+                            captureBtn.disabled = true;
+                            statusText.textContent = 'Hold still... analyzing face';
+                            showFaceStatus('Please hold still for a moment', 'warning');
+                        } else {
+                            faceGuide.className = 'face-guide invalid';
+                            faceDetected = false;
+                            captureBtn.disabled = true;
+                            statusText.textContent = quality.message || 'Adjust your position';
+                            showFaceStatus(quality.message || 'Please position your face properly', 'warning');
+                        }
+                    } else {
+                        detectionCount = 0;
+                        stableFrames = 0;
+                        lastDescriptor = null;
+                        faceDetected = false;
+                        captureBtn.disabled = true;
+                        faceGuide.className = 'face-guide invalid';
+                        statusDot.className = 'status-dot active';
+                        statusText.textContent = 'No face detected';
+                        showFaceStatus('Please center your face in the circle', 'warning');
+                    }
+                } catch (error) {
+                    console.error('Detection error:', error);
+                }
+            }, 300);
+        }
+
+        async function checkFaceQuality(detection) {
+            const landmarks = detection.landmarks;
+            const box = detection.alignedRect.box;
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+
+            let issues = [];
+            let isGood = true;
+
+            // 1. Check face size (should be at least 15% of frame)
+            const faceArea = box.width * box.height;
+            const frameArea = videoWidth * videoHeight;
+            const sizeRatio = faceArea / frameArea;
+            
+            if (sizeRatio < 0.08) {
+                issues.push('Face too small. Move closer.');
+                isGood = false;
+            } else if (sizeRatio > 0.6) {
+                issues.push('Face too large. Move back.');
+                isGood = false;
+            }
+
+            // 2. Check if face is centered
+            const centerX = videoWidth / 2;
+            const centerY = videoHeight / 2;
+            const faceCenterX = box.x + box.width / 2;
+            const faceCenterY = box.y + box.height / 2;
+            
+            const offsetX = Math.abs(faceCenterX - centerX) / videoWidth;
+            const offsetY = Math.abs(faceCenterY - centerY) / videoHeight;
+            
+            if (offsetX > 0.2 || offsetY > 0.2) {
+                issues.push('Center your face in the circle');
+                isGood = false;
+            }
+
+            // 3. Check face rotation
+            const nose = landmarks.getNose();
+            const leftEye = landmarks.getLeftEye();
+            const rightEye = landmarks.getRightEye();
+            
+            if (leftEye && rightEye && leftEye.length > 0 && rightEye.length > 0) {
+                const eyeCenterY = (leftEye[0].y + rightEye[0].y) / 2;
+                const noseY = nose[0].y;
+                const verticalRotation = Math.abs(noseY - eyeCenterY) / box.height;
+                
+                if (verticalRotation > 0.15) {
+                    issues.push('Look straight at the camera');
+                    isGood = false;
+                }
+            }
+
+            // 4. Check lighting (simplified)
+            // This would need pixel analysis - skip for now
+
+            return {
+                isGood: isGood,
+                issues: issues,
+                message: issues.length > 0 ? issues[0] : 'Good quality face'
+            };
+        }
+
+        // ============================================================
+        // UI HELPERS
+        // ============================================================
+        function showFaceStatus(message, type) {
             faceStatus.textContent = message;
             faceStatus.className = `status-message status-${type}`;
             faceStatus.classList.remove('hidden');
         }
-        
-        function hideStatus() {
+
+        function hideFaceStatus() {
             faceStatus.classList.add('hidden');
         }
-        
-        // Capture face
+
+        function showGlobalStatus(message, type) {
+            globalStatus.textContent = message;
+            globalStatus.className = `status-message status-${type}`;
+            globalStatus.classList.remove('hidden');
+            
+            setTimeout(() => {
+                globalStatus.classList.add('hidden');
+            }, 5000);
+        }
+
+        // ============================================================
+        // CAPTURE FACE
+        // ============================================================
         captureBtn.addEventListener('click', async () => {
-            if (!capturedFaceDescriptor) {
-                showStatus('Please center your face first', 'error');
+            if (!faceDetected || !faceDescriptor) {
+                showFaceStatus('No face detected. Please center your face.', 'error');
                 return;
             }
-            
-            // Capture image
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            
-            // Convert to blob
-            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
-            
-            // Upload to temporary storage
-            const tempFileName = `temp_faces/${Date.now()}_${Math.random()}.jpg`;
-            const storageRef = storage.ref(tempFileName);
-            await storageRef.put(blob);
-            capturedFaceUrl = await storageRef.getDownloadURL();
-            
-            // Move to step 2
-            step1Content.classList.add('hidden');
-            step2Content.classList.remove('hidden');
-            step1.classList.remove('active');
-            step1.classList.add('completed');
-            step2.classList.add('active');
-            
-            // Stop camera to save battery
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                clearInterval(detectionInterval);
+
+            try {
+                captureBtn.disabled = true;
+                captureBtn.innerHTML = '<span class="spinner"></span> Capturing...';
+
+                // Capture image from video
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Convert to blob
+                capturedImageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+                
+                // Create URL for preview
+                capturedImageUrl = URL.createObjectURL(capturedImageBlob);
+                
+                // Show preview
+                capturedImagePreview.src = capturedImageUrl;
+                capturedImagePreview.style.display = 'block';
+
+                // Stop camera
+                stopCamera();
+
+                // Move to step 2
+                step1Content.classList.add('hidden');
+                step2Content.classList.remove('hidden');
+                step1.classList.remove('active');
+                step1.classList.add('completed');
+                step2.classList.add('active');
+
+                showGlobalStatus('✅ Face captured successfully! Please fill in your details.', 'success');
+
+            } catch (error) {
+                console.error('Capture error:', error);
+                showFaceStatus('Error capturing face. Please try again.', 'error');
+                captureBtn.disabled = false;
+                captureBtn.innerHTML = '📸 Capture Live Face';
             }
-            
-            showStatus('Face captured successfully!', 'success');
         });
-        
-        // Handle registration form
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+
+        // ============================================================
+        // REGISTRATION FORM
+        // ============================================================
+        registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const email = document.getElementById('email').value;
+
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const displayName = document.getElementById('displayName').value;
-            const phone = document.getElementById('phone').value;
-            
-            if (!email || !password || !displayName) {
-                showGlobalStatus('Please fill all required fields', 'error');
+            const displayName = document.getElementById('displayName').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+
+            // Validate
+            if (!email) {
+                showGlobalStatus('Please enter your email address', 'error');
                 return;
             }
-            
-            if (password.length < 6) {
+
+            if (!password || password.length < 6) {
                 showGlobalStatus('Password must be at least 6 characters', 'error');
                 return;
             }
-            
-            showGlobalStatus('Creating account...', 'info');
-            
+
+            if (!displayName) {
+                showGlobalStatus('Please enter a display name', 'error');
+                return;
+            }
+
+            if (!capturedImageBlob) {
+                showGlobalStatus('Please capture your face first', 'error');
+                return;
+            }
+
+            const registerBtn = document.getElementById('registerBtn');
+            registerBtn.disabled = true;
+            registerBtn.innerHTML = '<span class="spinner"></span> Creating account...';
+
             try {
+                // Upload face image to Firebase Storage
+                const fileName = `registration_faces/${Date.now()}_${email.replace(/[^a-zA-Z0-9]/g, '_')}.jpg`;
+                const storageRef = storage.ref(fileName);
+                await storageRef.put(capturedImageBlob);
+                const faceUrl = await storageRef.getDownloadURL();
+
+                // Convert face descriptor to array for storage
+                const descriptorArray = Array.from(faceDescriptor);
+
                 // Create user in Firebase Auth
                 const userCred = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCred.user;
-                
+
                 // Update profile
                 await user.updateProfile({
                     displayName: displayName,
-                    photoURL: capturedFaceUrl
+                    photoURL: faceUrl
                 });
-                
-                // Store face descriptor and additional data
-                const faceDescriptorArray = Array.from(capturedFaceDescriptor);
-                
+
+                // Store user data in Firestore
                 await db.collection('users').doc(user.uid).set({
                     uid: user.uid,
                     email: email,
                     displayName: displayName,
                     phone: phone || '',
-                    faceUrl: capturedFaceUrl,
-                    faceDescriptor: faceDescriptorArray,
-                    registrationFaceUrl: capturedFaceUrl,
+                    faceUrl: faceUrl,
+                    registrationFaceUrl: faceUrl,
+                    faceDescriptor: descriptorArray,
                     isVerified: false,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     online: true,
                     status: 'online'
                 });
-                
+
                 tempUserId = user.uid;
-                
-                // Generate and send OTP (simulated - in production use Cloud Function)
-                const otp = Math.floor(100000 + Math.random() * 900000);
+
+                // Generate and send OTP
+                const otp = Math.floor(100000 + Math.random() * 900000).toString();
                 sessionStorage.setItem('tempOtp', otp);
                 sessionStorage.setItem('tempUid', user.uid);
-                
-                console.log(`OTP for ${email}: ${otp}`);
-                showGlobalStatus(`Demo OTP sent: ${otp} (Check console)`, 'success');
-                
+
+                // Show OTP in console for demo
+                console.log('=====================================');
+                console.log('🔐 VERIFICATION OTP');
+                console.log(`📧 Email: ${email}`);
+                console.log(`🔑 OTP Code: ${otp}`);
+                console.log('⏰ Expires in 10 minutes');
+                console.log('=====================================');
+
+                // Store OTP in Firestore
+                await db.collection('temp_otp').doc(user.uid).set({
+                    otp: otp,
+                    email: email,
+                    expiresAt: Date.now() + 600000,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
                 // Move to OTP step
                 step2Content.classList.add('hidden');
                 step3Content.classList.remove('hidden');
                 step2.classList.remove('active');
                 step2.classList.add('completed');
                 step3.classList.add('active');
-                
+
+                showGlobalStatus('✅ OTP sent! Please check your email (or console for demo).', 'success');
                 startTimer();
-                
-            } catch (err) {
-                console.error(err);
-                showGlobalStatus(handleFirebaseError(err), 'error');
+
+                registerBtn.disabled = false;
+                registerBtn.innerHTML = 'Continue →';
+
+            } catch (error) {
+                console.error('Registration error:', error);
+                let message = 'Registration failed. Please try again.';
+                if (error.code === 'auth/email-already-in-use') {
+                    message = 'This email is already registered. Please login instead.';
+                } else if (error.code === 'auth/weak-password') {
+                    message = 'Password is too weak. Use at least 6 characters.';
+                } else if (error.code === 'auth/invalid-email') {
+                    message = 'Invalid email address.';
+                }
+                showGlobalStatus('❌ ' + message, 'error');
+                registerBtn.disabled = false;
+                registerBtn.innerHTML = 'Continue →';
             }
         });
-        
+
+        // ============================================================
+        // OTP VERIFICATION
+        // ============================================================
         function startTimer() {
             const timerElement = document.getElementById('timer');
             timeLeft = 600;
+            
+            if (otpTimer) clearInterval(otpTimer);
             
             otpTimer = setInterval(() => {
                 const minutes = Math.floor(timeLeft / 60);
@@ -520,78 +1003,176 @@
                     clearInterval(otpTimer);
                     timerElement.textContent = 'Expired';
                     document.getElementById('verifyBtn').disabled = true;
-                    showGlobalStatus('OTP expired. Please request a new code.', 'error');
+                    showGlobalStatus('⏰ OTP expired. Please request a new code.', 'error');
                 }
                 timeLeft--;
             }, 1000);
         }
-        
-        // Verify OTP
+
         document.getElementById('verifyBtn').addEventListener('click', async () => {
-            const enteredOtp = document.getElementById('otpCode').value;
+            const enteredOtp = document.getElementById('otpCode').value.trim();
             const storedOtp = sessionStorage.getItem('tempOtp');
             const tempUid = sessionStorage.getItem('tempUid');
-            
+
             if (!enteredOtp || enteredOtp.length !== 6) {
-                showGlobalStatus('Please enter the 6-digit code', 'error');
+                showGlobalStatus('Please enter the 6-digit verification code', 'error');
                 return;
             }
-            
-            if (enteredOtp === storedOtp) {
+
+            const verifyBtn = document.getElementById('verifyBtn');
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<span class="spinner"></span> Verifying...';
+
+            try {
+                // Check OTP in Firestore
+                const otpDoc = await db.collection('temp_otp').doc(tempUid).get();
+                
+                if (!otpDoc.exists) {
+                    showGlobalStatus('❌ OTP not found. Please request a new code.', 'error');
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerHTML = '✅ Verify & Complete';
+                    return;
+                }
+
+                const otpData = otpDoc.data();
+
+                if (otpData.otp !== enteredOtp) {
+                    showGlobalStatus('❌ Invalid OTP. Please try again.', 'error');
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerHTML = '✅ Verify & Complete';
+                    return;
+                }
+
+                if (Date.now() > otpData.expiresAt) {
+                    showGlobalStatus('❌ OTP expired. Please request a new code.', 'error');
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerHTML = '✅ Verify & Complete';
+                    return;
+                }
+
                 // Mark user as verified
                 await db.collection('users').doc(tempUid).update({
                     isVerified: true,
                     verifiedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                
+
+                // Delete OTP
+                await db.collection('temp_otp').doc(tempUid).delete();
+
+                // Update auth user email verification
+                await auth.currentUser.updateEmail(otpData.email);
+                await auth.currentUser.sendEmailVerification();
+
                 clearInterval(otpTimer);
-                showGlobalStatus('Registration complete! Redirecting...', 'success');
-                
+                showGlobalStatus('🎉 Registration complete! Redirecting to dashboard...', 'success');
+
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
                 }, 2000);
-            } else {
-                showGlobalStatus('Invalid OTP code. Please try again.', 'error');
+
+            } catch (error) {
+                console.error('Verification error:', error);
+                showGlobalStatus('❌ Verification failed. Please try again.', 'error');
+                verifyBtn.disabled = false;
+                verifyBtn.innerHTML = '✅ Verify & Complete';
             }
         });
-        
+
         // Resend OTP
         document.getElementById('resendBtn').addEventListener('click', async () => {
-            const newOtp = Math.floor(100000 + Math.random() * 900000);
-            sessionStorage.setItem('tempOtp', newOtp);
-            timeLeft = 600;
-            clearInterval(otpTimer);
-            startTimer();
-            console.log(`New OTP: ${newOtp}`);
-            showGlobalStatus('New OTP sent! Check console.', 'success');
-        });
-        
-        function showGlobalStatus(message, type) {
-            const statusDiv = document.getElementById('globalStatus');
-            statusDiv.textContent = message;
-            statusDiv.className = `status-message status-${type}`;
-            statusDiv.classList.remove('hidden');
+            const tempUid = sessionStorage.getItem('tempUid');
             
-            setTimeout(() => {
-                statusDiv.classList.add('hidden');
-            }, 5000);
-        }
-        
-        function handleFirebaseError(error) {
-            switch (error.code) {
-                case 'auth/email-already-in-use':
-                    return 'Email already registered. Please login instead.';
-                case 'auth/invalid-email':
-                    return 'Invalid email address';
-                case 'auth/weak-password':
-                    return 'Password should be at least 6 characters';
-                default:
-                    return error.message || 'Registration failed. Please try again.';
+            if (!tempUid) {
+                showGlobalStatus('❌ Session expired. Please start over.', 'error');
+                return;
+            }
+
+            try {
+                const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+                const email = auth.currentUser?.email || 'your email';
+                
+                // Update OTP in Firestore
+                await db.collection('temp_otp').doc(tempUid).set({
+                    otp: newOtp,
+                    email: email,
+                    expiresAt: Date.now() + 600000,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Update session
+                sessionStorage.setItem('tempOtp', newOtp);
+                
+                console.log('=====================================');
+                console.log('🔄 NEW VERIFICATION OTP');
+                console.log(`🔑 New OTP: ${newOtp}`);
+                console.log('⏰ Expires in 10 minutes');
+                console.log('=====================================');
+
+                // Reset timer
+                clearInterval(otpTimer);
+                startTimer();
+                
+                showGlobalStatus('✅ New OTP sent! Check console or email.', 'success');
+                
+            } catch (error) {
+                console.error('Resend error:', error);
+                showGlobalStatus('❌ Failed to resend OTP. Please try again.', 'error');
+            }
+        });
+
+        // Enter key on OTP field
+        document.getElementById('otpCode').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('verifyBtn').click();
+            }
+        });
+
+        // ============================================================
+        // INITIALIZATION
+        // ============================================================
+        async function init() {
+            try {
+                // Load face models
+                const modelsLoaded = await loadFaceModels();
+                if (!modelsLoaded) {
+                    showGlobalStatus('Failed to load face detection. Please refresh.', 'error');
+                    return;
+                }
+
+                // Start camera
+                const cameraStarted = await startCamera();
+                if (!cameraStarted) {
+                    showGlobalStatus('Camera access required. Please allow camera and refresh.', 'error');
+                    return;
+                }
+
+                // Check if already logged in
+                auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        // Already logged in, redirect to dashboard
+                        window.location.href = 'dashboard.html';
+                    }
+                });
+
+            } catch (error) {
+                console.error('Init error:', error);
+                showGlobalStatus('❌ Failed to initialize. Please refresh the page.', 'error');
             }
         }
-        
-        // Initialize
-        loadFaceModels();
+
+        // Start the application
+        init();
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            stopCamera();
+            if (otpTimer) clearInterval(otpTimer);
+            if (detectionInterval) clearInterval(detectionInterval);
+        });
+
+        console.log('📸 VeriChat Registration Page Loaded');
+        console.log('ℹ️  Face detection will start automatically');
+        console.log('ℹ️  Position your face in the circle guide');
     </script>
 </body>
 </html>
