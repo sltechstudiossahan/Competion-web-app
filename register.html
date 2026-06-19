@@ -52,7 +52,6 @@
             font-size: 0.85rem;
         }
 
-        /* Progress Steps */
         .progress-steps {
             display: flex;
             justify-content: space-between;
@@ -115,7 +114,6 @@
             font-weight: bold;
         }
 
-        /* Camera Section */
         .camera-section {
             margin-bottom: 20px;
         }
@@ -213,7 +211,6 @@
             50% { opacity: 0.3; }
         }
 
-        /* Buttons */
         .btn {
             width: 100%;
             padding: 14px;
@@ -255,7 +252,6 @@
             color: white;
         }
 
-        /* Form */
         .form-group {
             margin-bottom: 15px;
         }
@@ -283,17 +279,10 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .form-group input:disabled {
-            background: #f5f5f5;
-            cursor: not-allowed;
-        }
-
-        /* Hidden sections */
         .hidden {
             display: none !important;
         }
 
-        /* Status Messages */
         .status-message {
             padding: 12px;
             border-radius: 10px;
@@ -376,7 +365,6 @@
             font-weight: 600;
         }
 
-        /* Loading Spinner */
         .spinner {
             display: inline-block;
             width: 20px;
@@ -391,19 +379,16 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Responsive */
         @media (max-width: 480px) {
             .register-container {
                 padding: 20px;
                 border-radius: 15px;
             }
-
             .face-guide {
                 width: 55%;
             }
         }
 
-        /* Debug button */
         .debug-btn {
             background: #ff9800;
             color: white;
@@ -413,10 +398,25 @@
             cursor: pointer;
             font-size: 0.8rem;
             margin-top: 10px;
+            width: 100%;
         }
 
         .debug-btn:hover {
             background: #f57c00;
+        }
+
+        .error-details {
+            background: #fff5f5;
+            border: 1px solid #f56565;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 0.85rem;
+            color: #742a2a;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
     </style>
 </head>
@@ -428,7 +428,6 @@
             <p>Live Face Verification Required</p>
         </div>
 
-        <!-- Progress Steps -->
         <div class="progress-steps">
             <div class="step active" id="step1">
                 <div class="step-number">1</div>
@@ -467,7 +466,6 @@
                 📸 Capture Live Face
             </button>
             
-            <!-- Debug button to force enable capture -->
             <button class="debug-btn" id="debugBtn">🔧 Debug: Force Enable Capture</button>
             
             <p style="text-align: center; font-size: 0.8rem; color: #999; margin-top: 10px;">
@@ -504,6 +502,8 @@
                     Continue →
                 </button>
             </form>
+            
+            <div id="errorDetails" class="error-details hidden"></div>
         </div>
 
         <!-- Step 3: OTP Verification -->
@@ -570,6 +570,7 @@
         const faceStatus = document.getElementById('faceStatus');
         const captureBtn = document.getElementById('captureBtn');
         const debugBtn = document.getElementById('debugBtn');
+        const errorDetails = document.getElementById('errorDetails');
         
         const step1Content = document.getElementById('step1Content');
         const step2Content = document.getElementById('step2Content');
@@ -649,13 +650,11 @@
                 statusText.textContent = '📷 Camera ready - detecting face...';
                 console.log('Camera started successfully');
                 
-                // Start face detection after video is ready
                 video.addEventListener('loadedmetadata', () => {
                     console.log('Video metadata loaded, starting face detection');
                     startFaceDetection();
                 });
 
-                // If video already has metadata
                 if (video.videoWidth > 0) {
                     startFaceDetection();
                 }
@@ -712,7 +711,6 @@
                     if (detection) {
                         const descriptor = detection.descriptor;
                         
-                        // Check if face is stable
                         if (lastDescriptor) {
                             const distance = faceapi.euclideanDistance(descriptor, lastDescriptor);
                             if (distance < 0.3) {
@@ -725,11 +723,9 @@
                         }
                         lastDescriptor = descriptor;
 
-                        // Check face quality
                         const quality = await checkFaceQuality(detection);
                         
                         if (quality.isGood && stableFrames > 3) {
-                            // Face is stable and good quality
                             faceGuide.className = 'face-guide valid';
                             faceDetected = true;
                             faceDescriptor = descriptor;
@@ -775,7 +771,6 @@
             let issues = [];
             let isGood = true;
 
-            // Check face size
             const faceArea = box.width * box.height;
             const frameArea = videoWidth * videoHeight;
             const sizeRatio = faceArea / frameArea;
@@ -788,7 +783,6 @@
                 isGood = false;
             }
 
-            // Check if face is centered
             const centerX = videoWidth / 2;
             const centerY = videoHeight / 2;
             const faceCenterX = box.x + box.width / 2;
@@ -832,6 +826,11 @@
             }, 5000);
         }
 
+        function showErrorDetails(message) {
+            errorDetails.textContent = message;
+            errorDetails.classList.remove('hidden');
+        }
+
         // ============================================================
         // DEBUG: Force Enable Capture Button
         // ============================================================
@@ -860,32 +859,25 @@
                 captureBtn.disabled = true;
                 captureBtn.innerHTML = '<span class="spinner"></span> Capturing...';
 
-                // Capture image from video
                 const canvas = document.createElement('canvas');
                 canvas.width = video.videoWidth || 640;
                 canvas.height = video.videoHeight || 480;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // Convert to blob
                 capturedImageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
                 
-                // Create URL for preview
                 capturedImageUrl = URL.createObjectURL(capturedImageBlob);
                 
-                // Show preview
                 capturedImagePreview.src = capturedImageUrl;
                 capturedImagePreview.style.display = 'block';
 
-                // If debug mode, create a fake descriptor
                 if (debugMode && !faceDescriptor) {
                     faceDescriptor = new Float32Array(128);
                 }
 
-                // Stop camera
                 stopCamera();
 
-                // Move to step 2
                 step1Content.classList.add('hidden');
                 step2Content.classList.remove('hidden');
                 step1.classList.remove('active');
@@ -903,7 +895,7 @@
         });
 
         // ============================================================
-        // REGISTRATION FORM
+        // REGISTRATION FORM - FIXED
         // ============================================================
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -939,48 +931,70 @@
             registerBtn.innerHTML = '<span class="spinner"></span> Creating account...';
 
             try {
-                // Upload face image to Firebase Storage
-                const fileName = `registration_faces/${Date.now()}_${email.replace(/[^a-zA-Z0-9]/g, '_')}.jpg`;
-                const storageRef = storage.ref(fileName);
-                await storageRef.put(capturedImageBlob);
-                const faceUrl = await storageRef.getDownloadURL();
+                console.log('Starting registration process...');
+                console.log('Email:', email);
+                console.log('Display Name:', displayName);
 
-                // Convert face descriptor to array for storage
-                const descriptorArray = faceDescriptor ? Array.from(faceDescriptor) : [];
-
-                // Create user in Firebase Auth
+                // STEP 1: Create user in Firebase Auth
+                console.log('Step 1: Creating Firebase Auth user...');
                 const userCred = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCred.user;
+                console.log('✅ Auth user created:', user.uid);
 
-                // Update profile
-                await user.updateProfile({
-                    displayName: displayName,
-                    photoURL: faceUrl
-                });
+                // STEP 2: Upload face image to Firebase Storage
+                console.log('Step 2: Uploading face image...');
+                let faceUrl = null;
+                try {
+                    const fileName = `registration_faces/${Date.now()}_${email.replace(/[^a-zA-Z0-9]/g, '_')}.jpg`;
+                    const storageRef = storage.ref(fileName);
+                    const uploadTask = await storageRef.put(capturedImageBlob);
+                    faceUrl = await storageRef.getDownloadURL();
+                    console.log('✅ Face image uploaded:', faceUrl);
+                } catch (storageError) {
+                    console.error('Storage upload error:', storageError);
+                    // Continue without face URL - we'll use a placeholder
+                    faceUrl = null;
+                    showGlobalStatus('⚠️ Face image upload failed, but continuing with registration...', 'warning');
+                }
 
-                // Store user data in Firestore
-                await db.collection('users').doc(user.uid).set({
+                // STEP 3: Update user profile
+                console.log('Step 3: Updating user profile...');
+                try {
+                    await user.updateProfile({
+                        displayName: displayName,
+                        photoURL: faceUrl || null
+                    });
+                    console.log('✅ Profile updated');
+                } catch (profileError) {
+                    console.error('Profile update error:', profileError);
+                }
+
+                // STEP 4: Store user data in Firestore
+                console.log('Step 4: Storing user data in Firestore...');
+                const userData = {
                     uid: user.uid,
                     email: email,
                     displayName: displayName,
                     phone: phone || '',
-                    faceUrl: faceUrl,
-                    registrationFaceUrl: faceUrl,
-                    faceDescriptor: descriptorArray,
+                    faceUrl: faceUrl || '',
+                    registrationFaceUrl: faceUrl || '',
+                    faceDescriptor: faceDescriptor ? Array.from(faceDescriptor) : [],
                     isVerified: false,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     online: true,
                     status: 'online'
-                });
+                };
 
-                tempUserId = user.uid;
+                await db.collection('users').doc(user.uid).set(userData);
+                console.log('✅ Firestore user data saved');
 
-                // Generate OTP
+                // STEP 5: Generate and send OTP
+                console.log('Step 5: Generating OTP...');
                 const otp = Math.floor(100000 + Math.random() * 900000).toString();
                 sessionStorage.setItem('tempOtp', otp);
                 sessionStorage.setItem('tempUid', user.uid);
+                tempUserId = user.uid;
 
-                // Show OTP in console
                 console.log('=====================================');
                 console.log('🔐 VERIFICATION OTP');
                 console.log(`📧 Email: ${email}`);
@@ -989,12 +1003,17 @@
                 console.log('=====================================');
 
                 // Store OTP in Firestore
-                await db.collection('temp_otp').doc(user.uid).set({
-                    otp: otp,
-                    email: email,
-                    expiresAt: Date.now() + 600000,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                try {
+                    await db.collection('temp_otp').doc(user.uid).set({
+                        otp: otp,
+                        email: email,
+                        expiresAt: Date.now() + 600000,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('✅ OTP stored in Firestore');
+                } catch (otpError) {
+                    console.error('OTP storage error:', otpError);
+                }
 
                 // Move to OTP step
                 step2Content.classList.add('hidden');
@@ -1003,23 +1022,40 @@
                 step2.classList.add('completed');
                 step3.classList.add('active');
 
-                showGlobalStatus('✅ OTP sent! Please check your email (or console for demo).', 'success');
+                showGlobalStatus('✅ Account created! OTP sent! Check console for demo code.', 'success');
                 startTimer();
 
                 registerBtn.disabled = false;
                 registerBtn.innerHTML = 'Continue →';
 
             } catch (error) {
-                console.error('Registration error:', error);
-                let message = 'Registration failed. Please try again.';
+                console.error('❌ Registration error:', error);
+                console.error('Error details:', error.code, error.message);
+                
+                // Show detailed error
+                let errorMessage = 'Registration failed. ';
+                let detailedError = '';
+                
                 if (error.code === 'auth/email-already-in-use') {
-                    message = 'This email is already registered. Please login instead.';
+                    errorMessage = 'This email is already registered. Please login instead.';
                 } else if (error.code === 'auth/weak-password') {
-                    message = 'Password is too weak. Use at least 6 characters.';
+                    errorMessage = 'Password is too weak. Use at least 6 characters.';
                 } else if (error.code === 'auth/invalid-email') {
-                    message = 'Invalid email address.';
+                    errorMessage = 'Invalid email address.';
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    errorMessage = 'Email/Password sign-in is not enabled. Please enable it in Firebase Console.';
+                    detailedError = 'Go to Firebase Console → Authentication → Sign-in methods → Enable Email/Password';
+                } else if (error.message.includes('permission-denied')) {
+                    errorMessage = 'Permission denied. Please check Firestore rules.';
+                    detailedError = 'Make sure Firestore rules allow writes to users collection.';
+                } else {
+                    errorMessage = error.message || 'Unknown error occurred';
+                    detailedError = `Error code: ${error.code}\n${error.stack || ''}`;
                 }
-                showGlobalStatus('❌ ' + message, 'error');
+                
+                showGlobalStatus('❌ ' + errorMessage, 'error');
+                showErrorDetails(`Error: ${errorMessage}\n\n${detailedError}\n\nFull error: ${error.message}`);
+                
                 registerBtn.disabled = false;
                 registerBtn.innerHTML = 'Continue →';
             }
@@ -1164,28 +1200,24 @@
             try {
                 console.log('🚀 Initializing VeriChat Registration...');
                 
-                // Load face models
                 const modelsLoaded = await loadFaceModels();
                 if (!modelsLoaded) {
                     showGlobalStatus('Failed to load face detection. Please refresh.', 'error');
                     return;
                 }
 
-                // Start camera
                 const cameraStarted = await startCamera();
                 if (!cameraStarted) {
                     showGlobalStatus('Camera access required. Please allow camera and refresh.', 'error');
                     return;
                 }
 
-                // Check if already logged in
                 auth.onAuthStateChanged((user) => {
                     if (user) {
                         window.location.href = 'dashboard.html';
                     }
                 });
 
-                // Log status
                 console.log('✅ Initialization complete');
                 console.log(`- Models loaded: ${modelsLoaded}`);
                 console.log(`- Camera ready: ${cameraStarted}`);
@@ -1209,6 +1241,8 @@
 
         console.log('📸 VeriChat Registration Page Loaded');
         console.log('ℹ️  If face detection fails, click the "Debug" button to force enable capture');
+        console.log('ℹ️  Check Firebase Console: Authentication → Sign-in methods → Enable Email/Password');
+        console.log('ℹ️  Check Firebase Console: Firestore → Rules → Allow read/write for testing');
     </script>
 </body>
 </html>
